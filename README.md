@@ -1,40 +1,117 @@
-# tp_bigdata_etl
+📰 NewsPipeline - ETL de flux d’actualités basé sur Kafka et Docker
+🚀 Présentation
+NewsPipeline est une solution ETL conteneurisée permettant de récupérer, transformer et stocker des données issues de l'API News API. Elle repose sur une architecture microservices orchestrée via Docker Compose, et utilise Apache Kafka pour la gestion de flux de données en temps réel.
 
+Le but est de permettre une collecte automatisée et scalable de données d’actualités, avec un traitement asynchrone et une persistance dans une base MongoDB pour des analyses ultérieures.
 
------------------------------------ DESCRIPTION GLOBALE DE LA SOLUTION -------------------------------------------------------
+🛠️ Architecture
+lua
+Copier
+Modifier
++-------------+          +------------+         +-------------+         +-------------+
+|  Aggregator | ───────► | Kafka Pub  | ─────►  | Kafka Topic | ─────►  | Topic-sub   |
+| (Data Fetch)|          | (Producer) |         | (Stream)    |         | (Consumer)  |
++-------------+          +------------+         +-------------+         +-------------+
+                                                                              │
+                                                                              ▼
+                                                                       +-------------+
+                                                                       |   MongoDB   |
+                                                                       +-------------+
+Description des composants
+Aggregator : Récupère les données depuis l’API News API et les structure selon un modèle prédéfini.
 
-Notre solution est un ETL complet. C'est à dire qu'il vise à automatiser le processus de récupération, de traitement et de stockage de données provenant de l'API News API, en utilisant une architecture basée sur des microservices et des conteneurs Docker, orchestrée par Docker-compose.
+Kafka Publisher (AggCloudKafka) : Publie les données formatées sur des topics Kafka spécifiques.
 
-Tout d'abord, nous avons mis en place un composant appelé "Aggregator" qui interagit avec l'API News API pour récupérer des données en masse. Cette composante est responsable de la collecte initiale des données brutes.
-Ce microservice reçoit les données de l'API News API et les formate selon un modèle prédéfini. Une fois les données formatées, l'AggCloudKafka les publie sur un topic Kafka approprié. Cette étape de publication sur Kafka permet une séparation claire des différentes catégories de données en fonction de leurs sujets.
+Kafka : Gère les flux de messages entre les producteurs et consommateurs. Assure la fiabilité et la scalabilité.
 
-Dans cette configuration, Kafka agit comme un système de messagerie et de traitement des flux de données en temps réel. Il permet de décharger les producteurs de données (comme l'Aggregator) des consommateurs (comme le Topic-sub) en agissant comme une file d'attente des données, assurant ainsi une séparation des responsabilités et une scalabilité efficace. En publiant les données sur des topics spécifiques, Kafka facilite le traitement parallèle des flux de données et garantit la livraison des messages, contribuant ainsi à la fiabilité et à la performance globale du système.
+Topic-sub (Consumer) : Consomme les données Kafka et les enregistre dans MongoDB.
 
-Puis, nous avons mis en place un service appelé "Topic-sub". Ce service consomme les données à partir des topics Kafka et les enregistre dans une base de données MongoDB. Le Topic Consumer assure la persistance des données dans un format structuré et adapté à une analyse ultérieure.
+MongoDB : Stocke les données persistées, prêtes pour l’analyse ou la visualisation.
 
-Tous ces composants, y compris l'Aggregator, le Topic-subscription, ainsi que Kafka et MongoDB, sont conteneurisés à l'aide de Docker. Cette approche de conteneurisation offre une portabilité, une isolation et une scalabilité accrues pour notre solution.
+Tous les composants sont conteneurisés à l’aide de Docker et orchestrés via Docker Compose.
 
-Enfin, nous utilisons Docker-compose pour orchestrer l'ensemble du système, permettant ainsi un déploiement simple et cohérent de tous les composants de notre solution.
+⚙️ Technologies utilisées
+🐳 Docker / Docker Compose
 
-En résumé, notre solution réalise un ETL complet en automatisant complètement le processus de récupération, de traitement et de stockage de données provenant de l'API News API, en utilisant une architecture basée sur des microservices et des conteneurs Docker, orchestrée par Docker-compose.
+🔁 Apache Kafka
 
+📡 News API (https://newsapi.org)
 
+🧩 Python (scripts d’ETL)
 
------------------------------------------------GUIDE D'INSTALLATION DE LA SOLUTION---------------------------------------------
+🗄️ MongoDB
 
+🧱 Microservices architecture
 
-1. Installer Docker et Docker-compose : Assurez-vous que Docker et Docker-compose sont installés sur votre machine. Vous pouvez les télécharger et les installer depuis les sites officiels de Docker.
+📦 Installation et déploiement
+1. Pré-requis
+Docker : Installation officielle
 
-2. Cloner le dépôt Git : Clonez le dépôt Git contenant les fichiers de configuration de la solution sur votre machine locale.
+Docker Compose : Guide d’installation
 
-3. Configurer les paramètres : Assurez-vous de configurer les paramètres appropriés dans les fichiers de configuration, tels que les informations d'authentification pour l'API News API, les paramètres de connexion pour MongoDB, etc.
+2. Cloner le projet
+bash
+Copier
+Modifier
+git clone https://github.com/ton-repo/news-pipeline.git
+cd news-pipeline
+3. Configuration
+Créer un fichier .env à la racine avec :
 
-4. Construction des conteneurs Docker : Utilisez Docker-compose pour construire les conteneurs Docker à partir des fichiers de configuration. Exécutez la commande `docker-compose build` dans le répertoire racine du projet.
+env
+Copier
+Modifier
+NEWS_API_KEY=your_api_key
+MONGO_URI=mongodb://mongo:27017/news
+Vérifier les paramètres de connexion dans les fichiers docker-compose.yml et config/*.json.
 
-5. Démarrer les services : Une fois que les conteneurs Docker sont construits, démarrez les services en exécutant la commande `docker-compose up`. Cela lancera tous les services définis dans le fichier Docker-compose.
+4. Lancer le projet
+bash
+Copier
+Modifier
+docker-compose up --build
+Cela lancera :
 
-6. Vérifier l'état des services : Vérifiez que tous les services ont démarré correctement en consultant les journaux de Docker-compose ou en accédant aux interfaces utilisateur/web des services, le cas échéant.
+Kafka + Zookeeper
 
-7. Tester la solution : Une fois les services démarrés, testez la solution en utilisant des requêtes vers l'API News API, en vérifiant que les données sont correctement agrégées et publiées sur Kafka, et en consultant la base de données MongoDB pour vérifier que les données sont correctement stockées.
+MongoDB
 
-En suivant ces étapes, vous devriez être en mesure d'installer et de tester la solution localement sur votre machine. Assurez-vous de consulter la documentation et les guides spécifiques à chaque composant de la solution pour obtenir des instructions détaillées sur la configuration et l'utilisation.
+Aggregator
+
+Topic-sub
+
+5. Vérification
+Vérifiez les logs Docker : docker-compose logs -f
+
+Confirmez la collecte et le stockage des données en accédant à MongoDB ou en inspectant les topics Kafka.
+
+🧪 Tester la solution
+Lancer manuellement le script Aggregator pour simuler une collecte.
+
+Vérifier que les données apparaissent dans les topics Kafka.
+
+Vérifier que le consumer les insère correctement dans MongoDB.
+
+📁 Structure du projet
+bash
+Copier
+Modifier
+.
+├── aggregator/           # Service d’ingestion
+├── consumer/             # Service de consommation Kafka
+├── docker-compose.yml    # Orchestration Docker
+├── kafka/                # Configuration Kafka/Zookeeper
+├── mongodb/              # Données MongoDB (volumes, init)
+├── config/               # Fichiers de config
+└── README.md
+✨ À venir / TODO
+Intégration d’un dashboard de visualisation (ex: Metabase, Grafana)
+
+Monitoring avec Prometheus / Grafana
+
+Tests unitaires pour les microservices
+
+Déploiement sur Kubernetes (en option)
+
+📄 Licence
+Ce projet est open source, sous licence MIT.
